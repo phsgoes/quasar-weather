@@ -6,6 +6,7 @@
         placehoder="Search"
         borderless
         dark
+        @keyup.enter="getWeatherBySearch"
       >
         <template v-slot:before>
           <q-icon
@@ -15,7 +16,13 @@
         </template>
 
         <template v-slot:append>
-          <q-btn round dense flat icon="search" />
+          <q-btn
+            round
+            dense
+            flat
+            icon="search"
+            @click="getWeatherBySearch"
+          />
         </template>
       </q-input>
     </div>
@@ -23,19 +30,21 @@
     <template v-if="weatherData">
       <div class="col text-white text-center">
         <div class="text-h4 text-weight-light">
-          Manchester
+          {{ weatherData.name }}
         </div>
         <div class="text-h6 text-weight-light">
-          Rain
+          {{ weatherData.weather[0].main }}
         </div>
         <div class="text-h1 text-weight-thin relative-position">
-          <span>8</span>
+          <span>{{ Math.round(weatherData.main.temp) }}</span>
           <span class="text-h4 relative-position degree">&deg;</span>
         </div>
       </div>
 
       <div class="col text-center">
-        <img src="https://www.fillmurray.com/100/100" alt="Bill" />
+        <img
+          :src="`http://openweathermap.org/img/wn/${weatherData.weather[0].icon}@2x.png`"
+        />
       </div>
     </template>
 
@@ -67,15 +76,42 @@ export default {
     search: '',
     weatherData: null,
     lat: null,
-    long: null
+    lon: null,
+    apiUrl: 'https://api.openweathermap.org/data/2.5/weather',
+    apiKey: '323b5a88014855e2178990da70e3aff9'
   }),
 
   methods: {
     getLocation() {
       navigator.geolocation.getCurrentPosition(position => {
         this.lat = position.coords.latitude;
-        this.long = position.coords.longitude
+        this.lon = position.coords.longitude
+        this.getWeatherCoords()
       })
+    },
+
+    async getWeatherCoords() {
+      const url = `${this.apiUrl}?lat=${this.lat}&lon=${this.lon}&appid=${this.apiKey}&units=metric`
+      
+      try {
+        const { data } = await this.$axios.get(url)
+        this.weatherData = data
+        console.log(data)
+      } catch (error) {
+        console.error(error)
+      }
+    },
+
+    async getWeatherBySearch() {
+      const url = `${this.apiUrl}?q=${this.search}&appid=${this.apiKey}&units=metric`
+      
+      try {
+        const { data } = await this.$axios.get(url)
+        this.weatherData = data
+        console.log(data)
+      } catch (error) {
+        console.error(error)
+      }
     }
   }
 }
